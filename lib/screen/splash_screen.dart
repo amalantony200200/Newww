@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:malabar_mess_app/widget/internet_error_snackbar.dart';
+import 'package:malabar_mess_app/screen/home_screen.dart';
 
 
 class SplashScreen extends StatefulWidget {
@@ -8,8 +8,6 @@ class SplashScreen extends StatefulWidget {
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
-
-  
 }
 
 class _SplashScreenState extends State<SplashScreen> {
@@ -18,8 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () async {
-      //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>  LockApp()));
-      await InternetConnectionCheck.internetCheck(context);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>  HomeScreen()));
     });
   }
 
