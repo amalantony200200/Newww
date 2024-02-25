@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               functionalButtons(context: context, page: SearchScreen(),title:"Enter passcode");
             },
-            child: Text("insert Button"),
+            child: Text("Add Member Button"),
           ),
           MaterialButton(
               onPressed: () => print("dsaf"), child: Text("update Button")),
@@ -47,7 +47,7 @@ class HomeScreen extends StatelessWidget {
           context,
           MaterialPageRoute(
               builder: (context) => PasscodeScreen(
-                    title: "Enter passcode",
+                    title: title,
                     passwordEnteredCallback: _onPasscodeEntered,
                     shouldTriggerVerification: _verificationNotifier.stream,
                     afterPasscodeCorrect: () {

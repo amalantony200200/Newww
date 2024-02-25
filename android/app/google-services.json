@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "477309575160",
+    "project_id": "malabarmessapp",
+    "storage_bucket": "malabarmessapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477309575160:android:c67a5ed073a609718b800d",
+        "android_client_info": {
+          "package_name": "com.example.malabar_mess_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAi40gGaqxkIkiYNLkkgnC-H-F-ZhjVr6o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
