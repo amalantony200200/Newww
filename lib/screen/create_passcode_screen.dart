@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:malabar_mess_app/classes/shared_preference.dart';
+import 'package:malabar_mess_app/model/get_database_data.dart';
+import 'package:malabar_mess_app/screen/home_screen.dart';
 import 'package:malabar_mess_app/widget/app_bar.dart';
+import 'package:malabar_mess_app/widget/snackbar.dart';
 
 class CreatePasscodeScreen extends StatelessWidget {
   CreatePasscodeScreen({super.key});
@@ -43,7 +47,9 @@ class CreatePasscodeScreen extends StatelessWidget {
                     SizedBox(height: size.height * 0.05),
                     TextFormField(
                       validator: (value) {
-                        return (validatePasscode(passcode: value))?null:"Wrong unique passcode";
+                        return (validatePasscode(passcode: value))
+                            ? null
+                            : "Wrong unique passcode";
                       },
                       controller: _messUniquePasscode,
                       keyboardType: TextInputType.number,
@@ -59,7 +65,9 @@ class CreatePasscodeScreen extends StatelessWidget {
                     SizedBox(height: size.height * 0.03),
                     TextFormField(
                       validator: (value) {
-                        return (validatePasscode(passcode: value))?null:"Enter 4 digit passcode";
+                        return (validatePasscode(passcode: value))
+                            ? null
+                            : "Enter 4 digit passcode";
                       },
                       controller: _messPasscode,
                       keyboardType: TextInputType.number,
@@ -78,13 +86,8 @@ class CreatePasscodeScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Processing Data')),
-                                );
-                              }
+                            onPressed: () async {
+                              await createButton(context: context);
                             },
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.indigo,
@@ -119,5 +122,28 @@ class CreatePasscodeScreen extends StatelessWidget {
                 passcode.contains(RegExp(r'[a-z]'))))
         ? true
         : false;
+  }
+
+  Future<void> createButton({required context}) async {
+    if (_formKey.currentState!.validate()) {
+      GetDatabaseData obj = GetDatabaseData();
+      int messPasscode = await obj.getMessUniquePasscode();
+      int passcode = int.parse(_messUniquePasscode.text);
+      if (!context.mounted) return;
+      if (messPasscode == passcode) {
+        SharedPreferenceClass obj = SharedPreferenceClass();
+        bool isCreate = await obj.setSharedPreference(passcode: int.parse(_messPasscode.text));
+        if (!context.mounted) return;
+        if (isCreate) {
+          ShowSnackBar(context: context, message: "Passcode created");
+          Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => HomeScreen()));
+        } else {
+          ShowSnackBar(context: context, message: "Something went wrong");
+        }
+      } else {
+        ShowSnackBar(context: context, message: " Wrong mess unique passcode");
+      }
+    }
   }
 }

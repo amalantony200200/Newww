@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:malabar_mess_app/classes/shared_preference.dart';
 import 'package:malabar_mess_app/screen/check_passcode_screen.dart';
 import 'package:malabar_mess_app/screen/search_screen.dart';
 import 'package:malabar_mess_app/widget/app_bar.dart';
@@ -63,8 +64,10 @@ class HomeScreen extends StatelessWidget {
   final StreamController<bool> _verificationNotifier =
       StreamController<bool>.broadcast();
 
-  _onPasscodeEntered(String enteredPasscode) {
-    bool isValid = '1234' == enteredPasscode;
+  _onPasscodeEntered(String enteredPasscode) async{
+    SharedPreferenceClass obj = SharedPreferenceClass();
+    int passcode = await obj.getSharedPreference();
+    bool isValid = passcode == int.parse(enteredPasscode);
     _verificationNotifier.add(isValid);
   }
 }
