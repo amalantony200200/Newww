@@ -4,9 +4,9 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:malabar_mess_app/screen/create_passcode_screen.dart';
-import 'package:malabar_mess_app/widget/circle.dart';
-import 'package:malabar_mess_app/widget/keyboard.dart';
+import 'package:malabar_mess_app/modules/passcode/screen/create_passcode_screen.dart';
+import 'package:malabar_mess_app/modules/passcode/widget/circle.dart';
+import 'package:malabar_mess_app/modules/passcode/widget/keyboard.dart';
 import 'package:malabar_mess_app/classes/shake_curve.dart';
 
 

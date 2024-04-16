@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:malabar_mess_app/classes/shared_preference.dart';
-import 'package:malabar_mess_app/model/get_database_data.dart';
+import 'package:malabar_mess_app/repo/get_database_data.dart';
 import 'package:malabar_mess_app/screen/home_screen.dart';
 import 'package:malabar_mess_app/widget/app_bar.dart';
 import 'package:malabar_mess_app/widget/snackbar.dart';

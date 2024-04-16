@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:malabar_mess_app/model/all_member_details.dart';
+import 'package:malabar_mess_app/model/member_details.dart';
+import 'package:malabar_mess_app/repo/get_database_data.dart';
 import 'package:malabar_mess_app/widget/app_bar.dart';
 
 class SearchScreen extends StatelessWidget {
@@ -8,85 +14,64 @@ class SearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final AllMemberDetails allMemberDetails = Get.put(AllMemberDetails());
+
     return Scaffold(
-      appBar: appBar(),
-      //backgroundColor: Colors.blueGrey[200],
-      body: Form(
-        key: _formKey,
-        child: SizedBox(
-          width: size.width,
-          height: size.height,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              //width: size.width * 0.85,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+      appBar:appBar(),
+      body: Column(
+        children: [
+          TextFormField(
+            controller: _searchField,
+            keyboardType: TextInputType.visiblePassword,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: "Search member ID or Name",
+              labelText: "Member",
+              isDense: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    //SizedBox(height: size.height * 0.005),
-                    TextFormField(
-                      controller: _searchField,
-                      keyboardType: TextInputType.visiblePassword,
-                      decoration: InputDecoration(
-                        hintText: "Search member ID or Name",
-                        labelText: "Member",
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        print(value);
-                      },
-                      onTapOutside: (event) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                      },
-                    ),
-                    SizedBox(height: size.height * 0.06),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Processing Data')),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.indigo,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 40, vertical: 15)),
-                            child: const Text(
-                              "Create",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            ),
+            onChanged: (value) {
+              displayList(value);
+            },
+            onTapOutside: (event) {
+              FocusManager.instance.primaryFocus?.unfocus();
+            },
+          ),
+          Obx(
+            () => Expanded(
+              child: ListView.builder(
+                itemCount: allMemberDetails.allMemberList.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(allMemberDetails.allMemberList[index].memberName),
+                  );
+                },
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
+  }
+  void displayList(String value){
+    List<MemberDetails>membersList = []; 
+    final allList=GetDatabaseData.allMembersList;
+    if(value.isNum){
+      for(int i=0;i<allList.length;i++){
+        if(value == allList[i].memberId){
+          membersList.add(allList[i]);
+        }
+      }
+    }else{
+      for(int i=0;i<allList.length;i++){
+        if(allList[i].memberName.toLowerCase().contains(value.toLowerCase())){
+          membersList.add(allList[i]);
+        }
+      }
+    }
+    final AllMemberDetails controller = Get.put(AllMemberDetails());
+    controller.initializeList(membersList);
   }
 }
