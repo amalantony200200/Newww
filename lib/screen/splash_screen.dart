@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:malabar_mess_app/repo/get_database_data.dart';
 import 'package:malabar_mess_app/screen/home_screen.dart';
 
 
@@ -13,9 +14,13 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   late BuildContext ctx;
   @override
-  void initState() {
+  initState(){
     super.initState();
+    GetDatabaseData obj = GetDatabaseData();
+    obj.getAllMembersDocs();
     Timer(const Duration(seconds: 3), () async {
+      await obj.getAllMembersDocs();
+      // ignore: use_build_context_synchronously
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>  HomeScreen()));
     });
   }

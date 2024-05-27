@@ -9,9 +9,11 @@ class MemberDetails{
   final String memberFoodTime;
   final DateTime memberValidFrom;
   final DateTime memberValidTill;
-  final Map<String,dynamic> memberExtends;
+  final List memberExtendsStart;
+  final List memberExtendsEnd;
   
-  MemberDetails({required this.memberId, required this.memberName, required this.memberNumber, required this.memberPaidAmount, required this.memberFoodTime, required this.memberValidFrom, required this.memberValidTill, required this.memberExtends});
+  
+  MemberDetails({required this.memberExtendsStart, required this.memberExtendsEnd,required this.memberId, required this.memberName, required this.memberNumber, required this.memberPaidAmount, required this.memberFoodTime, required this.memberValidFrom, required this.memberValidTill});
   
 }
 

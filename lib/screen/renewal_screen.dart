@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:malabar_mess_app/constant.dart';
+import 'package:malabar_mess_app/controller/get_database_controller.dart';
 import 'package:malabar_mess_app/model/member_details.dart';
 import 'package:malabar_mess_app/modules/ebill/generate_receipt.dart';
 import 'package:malabar_mess_app/modules/ebill/send_receipt.dart';
@@ -18,13 +19,22 @@ import 'package:malabar_mess_app/widget/snackbar.dart';
 import 'package:malabar_mess_app/widget/text_form_field.dart';
 import 'package:provider/provider.dart';
 
-class AddNewMemberScreen extends StatelessWidget {
+// ignore: must_be_immutable
+class RenewalMemberScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
   late BuildContext cnt;
-  late TextEditingController _idController = TextEditingController();
-  late TextEditingController _nameController = TextEditingController();
-  late TextEditingController _phoneController = TextEditingController();
-  late TextEditingController _amountController = TextEditingController();
+  late TextEditingController _idController;
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _amountController;
+  final MemberDetails memberDetails;
+
+  RenewalMemberScreen({super.key, required this.memberDetails}) {
+    _idController = TextEditingController(text: memberDetails.memberId);
+    _nameController = TextEditingController(text: memberDetails.memberName);
+    _phoneController = TextEditingController(text: memberDetails.memberNumber);
+    _amountController = TextEditingController(text: memberDetails.memberPaidAmount);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +43,18 @@ class AddNewMemberScreen extends StatelessWidget {
       appBar: appBar(),
       body: ChangeNotifierProvider<AddScreenProvider>(
         create: (context) => AddScreenProvider(
-          dateRange: DateTimeRange(start: DateTime.now(), end: DateTime.now().add(const Duration(days: 29))),
-          foodTime: "111",
-          extendsDateRage: DateTimeRange(start: DateTime.now(), end: DateTime.now().add(const Duration(days: 29)))
+          dateRange: DateTimeRange(
+            start: memberDetails.memberValidFrom,
+            end: memberDetails.memberValidTill,
+          ),
+          foodTime: memberDetails.memberFoodTime,
+          extendsDateRage: DateTimeRange(
+            start: memberDetails.memberValidFrom,
+            end: memberDetails.memberValidTill,
+          ),
         ),
         child: Container(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(10),
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
           child: Form(
@@ -49,7 +65,7 @@ class AddNewMemberScreen extends StatelessWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      headingText("Add Member"),
+                      headingText("Renewal Member"),
                       TEXT_INPUT_FIELD_SIZEDBOX,
                       textFormField(
                         _idController,
@@ -188,13 +204,13 @@ class AddNewMemberScreen extends StatelessWidget {
                             backgroundColor: MaterialStateProperty.all(BUTTON_COLOR),
                           ),
                           onPressed: () async {
-                            await addButton(provider);
+                            await updateButton(provider);
                           },
                           label: const Text(
-                            "ADD",
+                            "Update",
                             style: TextStyle(color: Colors.white),
                           ),
-                          icon: const Icon(Icons.add, color: Colors.white),
+                          icon: const Icon(Icons.update, color: Colors.white),
                         ),
                       ),
                     ],
@@ -240,10 +256,10 @@ class AddNewMemberScreen extends StatelessWidget {
     }
   }
 
-  Future<void> addButton(AddScreenProvider provider) async {
+  Future<void> updateButton(AddScreenProvider provider) async {
     if (_formKey.currentState!.validate()) {
       MemberDetails memberDetails = MemberDetails(
-        memberId: int.parse(_idController.text).toString(),
+        memberId: _idController.text,
         memberName: _nameController.text,
         memberNumber: _phoneController.text,
         memberPaidAmount: _amountController.text,
@@ -251,39 +267,38 @@ class AddNewMemberScreen extends StatelessWidget {
         memberValidFrom: provider.dateRange.start,
         memberValidTill: provider.dateRange.end,
         memberExtendsStart: [],
-        memberExtendsEnd: []
+        memberExtendsEnd: [],
       );
 
       GetDatabaseData getDatabaseData = GetDatabaseData();
       bool isValidMemberId = await getDatabaseData.checkIfDocExists(memberDetails.memberId);
-      bool isValidMobileNumber = getDatabaseData.checkIfPhoneExists(memberDetails.memberNumber);
 
-      if (isValidMemberId) {
-        ShowSnackBar(context: cnt, message: "Member ID already available");
-      } else if (isValidMobileNumber) {
-        ShowSnackBar(context: cnt, message: "Member Mobile number already available");
+      if (!isValidMemberId) {
+        ShowSnackBar(context: cnt, message: "Member ID is not available");
       } else {
         InsertIntoDatabase insertIntoDatabase = InsertIntoDatabase();
-        bool isCreated = await insertIntoDatabase.addMemberDetails(memberDetails: memberDetails);
+        bool isUpdated = await insertIntoDatabase.updateMemberDetails(memberDetails: memberDetails);
 
-        if (isCreated) {
-          ShowSnackBar(context: cnt, message: "Successfully added");
-          GenerateReceipt obj = GenerateReceipt();
-          final receipt = await obj.receipt(memberDetails);
+        if (isUpdated) {
+          ShowSnackBar(context: cnt, message: "Successfully updated");
+          GenerateReceipt generateReceipt = GenerateReceipt();
+          final receipt = await generateReceipt.receipt(memberDetails);
           SendReceipt sendReceipt = SendReceipt();
           final bool message = await sendReceipt.sendReceipt(receipt);
 
           if (message) {
-            GetDatabaseData obj = GetDatabaseData();
-            await obj.getAllMembersDocs();
-            Navigator.pushReplacement(
-              cnt, MaterialPageRoute(builder: (context) => HomeScreen()));
-            ShowSnackBar(context: cnt, message: "Successfully sent");
+            if (cnt.mounted) {
+              Navigator.pushReplacement(
+                cnt,
+                MaterialPageRoute(builder: (context) => HomeScreen()),
+              );
+              ShowSnackBar(context: cnt, message: "Successfully sent");
+            }
           } else {
-            ShowSnackBar(context: cnt, message: "Something went wrong. Receipt doesn't send");
+            ShowSnackBar(context: cnt, message: "Something went wrong. Receipt not sent");
           }
         } else {
-          ShowSnackBar(context: cnt, message: "Something went wrong. Data doesn't store in database");
+          ShowSnackBar(context: cnt, message: "Something went wrong. Data not stored in database");
         }
       }
     }
@@ -295,6 +310,7 @@ class AddNewMemberScreen extends StatelessWidget {
 // import 'package:flutter/material.dart';
 // import 'package:intl/intl.dart';
 // import 'package:malabar_mess_app/constant.dart';
+// import 'package:malabar_mess_app/controller/get_database_controller.dart';
 // import 'package:malabar_mess_app/model/member_details.dart';
 // import 'package:malabar_mess_app/modules/ebill/generate_receipt.dart';
 // import 'package:malabar_mess_app/modules/ebill/send_receipt.dart';
@@ -310,13 +326,23 @@ class AddNewMemberScreen extends StatelessWidget {
 // import 'package:malabar_mess_app/widget/text_form_field.dart';
 // import 'package:provider/provider.dart';
 
-// class AddNewMemberScreen extends StatelessWidget {
+// // ignore: must_be_immutable
+// class RenewalMemberScreen extends StatelessWidget {
 //   final _formKey = GlobalKey<FormState>();
 //   late BuildContext cnt;
 //   late TextEditingController _idController = TextEditingController();
 //   late TextEditingController _nameController = TextEditingController();
 //   late TextEditingController _phoneController = TextEditingController();
 //   late TextEditingController _amountController = TextEditingController();
+//   final MemberDetails memberDetails;
+
+//   RenewalMemberScreen({super.key, required this.memberDetails}) {
+//     _idController = TextEditingController(text: memberDetails.memberId);
+//     _nameController = TextEditingController(text: memberDetails.memberName);
+//     _phoneController = TextEditingController(text: memberDetails.memberNumber);
+//     _amountController =
+//         TextEditingController(text: memberDetails.memberPaidAmount);
+//   }
 
 //   @override
 //   Widget build(BuildContext context) {
@@ -324,7 +350,11 @@ class AddNewMemberScreen extends StatelessWidget {
 //     return Scaffold(
 //       appBar: appBar(),
 //       body: ChangeNotifierProvider<AddScreenProvider>(
-//         create: (context) => AddScreenProvider(dateRange: DateTimeRange(start: DateTime.now(), end: DateTime.now().add(const Duration(days: 29))),foodTime: "111",extendsDateRage: DateTimeRange(start: DateTime.now(), end: DateTime.now().add(const Duration(days: 29)))),
+//         create: (context) => AddScreenProvider(dateRange: DateTimeRange(
+//                     start: memberDetails.memberValidFrom,
+//                     end: memberDetails.memberValidTill),foodTime: memberDetails.memberFoodTime,extendsDateRage: DateTimeRange(
+//                     start: memberDetails.memberValidFrom,
+//                     end: memberDetails.memberValidTill)),
 //         child: Container(
 //           padding: const EdgeInsets.all(10),
 //           width: MediaQuery.of(context).size.width,
@@ -336,7 +366,7 @@ class AddNewMemberScreen extends StatelessWidget {
 //                   builder: (context, provider, child) {
 //                 return Column(
 //                   children: [
-//                     headingText("ADD Member"),
+//                     headingText("Renewal Member"),
 //                     TEXT_INPUT_FIELD_SIZEDBOX,
 //                     textFormField(_idController, TEXT_INPUT_FIELD_ID,
 //                         TextInputType.number),
@@ -434,18 +464,18 @@ class AddNewMemberScreen extends StatelessWidget {
 //                     ),
 //                     TEXT_INPUT_FIELD_SIZEDBOX,
 //                     ElevatedButton.icon(
-//                           style: ButtonStyle(
-//                               backgroundColor:
-//                                   MaterialStateProperty.all(BUTTON_COLOR)),
-//                           onPressed: () async {
-//                             await addButton(provider);
-//                           },
-//                           label:const Text(
-//                             "ADD",
-//                             style: const TextStyle(color: Colors.white),
-//                           ),
-//                           icon: const Icon(Icons.add),
-//                         ),
+//                       style: ButtonStyle(
+//                           backgroundColor:
+//                               MaterialStateProperty.all(BUTTON_COLOR)),
+//                       onPressed: () async {
+//                         await updateButton(provider);
+//                       },
+//                       label: const Text(
+//                         "Update",
+//                         style: TextStyle(color: Colors.white),
+//                       ),
+//                       icon: const Icon(Icons.add),
+//                     ),
 //                   ],
 //                 );
 //               }),
@@ -487,39 +517,36 @@ class AddNewMemberScreen extends StatelessWidget {
 //     provider.setDate(dateRange);
 //   }
 
-//   Future<void> addButton(AddScreenProvider provider) async {
+//   Future<void> updateButton(AddScreenProvider provider) async {
 //     if (_formKey.currentState!.validate()) {
 //       //ShowSnackBar(context: context, message: "Processing...");
+//       //print(provider.foodTime);
 //       MemberDetails memberDetails = MemberDetails(
-//           memberId: (int.parse(_idController.text).toString()),
-//           memberName: _nameController.text,
-//           memberNumber: _phoneController.text,
-//           memberPaidAmount: _amountController.text,
-//           memberFoodTime: provider.foodTime,
-//           memberValidFrom: provider.dateRange.start,
-//           memberValidTill: provider.dateRange.end,
-//           memberExtendsStart: [],
-//           memberExtendsEnd: []
+//         memberId: (int.parse(_idController.text).toString()),
+//         memberName: _nameController.text,
+//         memberNumber: _phoneController.text,
+//         memberPaidAmount: _amountController.text,
+//         memberFoodTime: provider.foodTime,
+//         memberValidFrom: provider.dateRange.start,
+//         memberValidTill: provider.dateRange.end,
+//         memberExtendsStart: [],
+//         memberExtendsEnd: []
 //       );
 //       GetDatabaseData getDatabaseData = GetDatabaseData();
 //       //await getDatabaseData.getAllMembersDocs();
 //       bool isValidMemberId =
 //           await getDatabaseData.checkIfDocExists(memberDetails.memberId);
-//       bool isValidMobileNumber = getDatabaseData.checkIfPhoneExists(memberDetails.memberNumber);
-//       if (isValidMemberId) {
+//       //bool isValidMobileNumber = getDatabaseData.checkIfPhoneExists(memberDetails.memberNumber);
+//       if (!isValidMemberId) {
 //         if (!cnt.mounted) return;
-//         ShowSnackBar(context: cnt, message: "Member ID already availabe");
-//       }else if(isValidMobileNumber){
-//         if (!cnt.mounted) return;
-//         ShowSnackBar(context: cnt, message: "Member Mobile number already availabe");
-//       } 
-//       else {
+//         ShowSnackBar(context: cnt, message: "Member ID is not availabe");
+//       } else {
 //         InsertIntoDatabase insertIntoDatabase = InsertIntoDatabase();
-//         bool isCreated = await insertIntoDatabase.addMemberDetails(
+//         bool isCreated = await insertIntoDatabase.updateMemberDetails(
 //             memberDetails: memberDetails);
 //         if (isCreated) {
 //           if (!cnt.mounted) return;
-//           ShowSnackBar(context: cnt, message: "Successfully added");
+//           ShowSnackBar(context: cnt, message: "Successfully updated");
 //           GenerateReceipt obj = GenerateReceipt();
 //           final receipt = await obj.receipt(memberDetails);
 //           SendReceipt sendReceipt = SendReceipt();
@@ -529,6 +556,7 @@ class AddNewMemberScreen extends StatelessWidget {
 //             Navigator.pushReplacement(
 //                 cnt, MaterialPageRoute(builder: (context) => HomeScreen()));
 //             ShowSnackBar(context: cnt, message: "Successfully sent");
+//             await getDatabaseData.getAllMembersDocs();
 //           } else {
 //             ShowSnackBar(
 //                 context: cnt,
